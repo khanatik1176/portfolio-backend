@@ -1,0 +1,106 @@
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+/// Global site info. Always a single row with id = 1.
+model SiteSettings {
+  id        Int      @id @default(1)
+  siteName  String   @default("My Portfolio")
+  ownerName String   @default("")
+  headline  String   @default("")
+  bio       String   @default("") @db.Text
+  avatarUrl String?
+  resumeUrl String?
+  email     String?
+  location  String?
+  /// [{ "platform": "github", "url": "https://..." }]
+  socials   Json     @default("[]")
+  /// { "title": "...", "description": "...", "ogImage": "..." }
+  seo       Json     @default("{}")
+  /// { "primary": "#...", "accent": "#..." }
+  theme     Json     @default("{}")
+  updatedAt DateTime @updatedAt
+}
+
+/// Tells the frontend which component renders the section.
+/// CUSTOM sections render generically from `content` + items.
+enum SectionType {
+  HERO
+  ABOUT
+  SKILLS
+  EXPERIENCE
+  EDUCATION
+  PROJECTS
+  SERVICES
+  TESTIMONIALS
+  CONTACT
+  CUSTOM
+}
+
+model Section {
+  id        String        @id @default(cuid())
+  slug      String        @unique
+  type      SectionType
+  title     String
+  subtitle  String?
+  /// Free-form section-level data (body text, CTA buttons, layout options, ...).
+  content   Json          @default("{}")
+  order     Int           @default(0)
+  isVisible Boolean       @default(true)
+  items     SectionItem[]
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@index([order])
+}
+
+/// A repeatable entry inside a section: a project, a job, a skill, a testimonial, ...
+model SectionItem {
+  id          String    @id @default(cuid())
+  sectionId   String
+  section     Section   @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  title       String
+  subtitle    String?
+  description String?   @db.Text
+  imageUrl    String?
+  link        String?
+  tags        String[]  @default([])
+  startDate   DateTime?
+  endDate     DateTime?
+  /// Type-specific extras (e.g. { "repoUrl": "...", "level": 80 }).
+  data        Json      @default("{}")
+  order       Int       @default(0)
+  isVisible   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([sectionId, order])
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  subject   String?
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
