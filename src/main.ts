@@ -7,8 +7,11 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   app.setGlobalPrefix('api');
+  // FRONTEND_URL may list several origins, comma separated (e.g. local dev ports plus the live site).
   app.enableCors({
-    origin: process.env.FRONTEND_URL ?? 'http://localhost:3000',
+    origin: (process.env.FRONTEND_URL ?? 'http://localhost:3000')
+      .split(',')
+      .map((url) => url.trim().replace(/\/$/, '')),
   });
   app.useGlobalPipes(
     new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),

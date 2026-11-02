@@ -9,7 +9,8 @@ export class RevalidateService {
   constructor(private readonly config: ConfigService) {}
 
   async portfolio() {
-    const frontendUrl = this.config.get<string>('FRONTEND_URL');
+    // FRONTEND_URL may list several CORS origins; the first is the frontend to notify.
+    const frontendUrl = this.config.get<string>('FRONTEND_URL')?.split(',')[0].trim().replace(/\/$/, '');
     const secret = this.config.get<string>('REVALIDATE_SECRET');
     if (!frontendUrl || !secret) return;
 
